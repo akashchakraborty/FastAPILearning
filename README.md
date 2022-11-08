@@ -82,3 +82,203 @@ We use async in FastAPI, due to asynchronous code, concurrency, and parallelism.
 Using async is not necessary when coding with FastAPI, we use ```def this_is_a_function():``` instead.
 In any of the cases above, FastAPI will still work asynchronously and perform very fast.
 Using async before the function, typically provides performance optimizations when handling asynchronous functions.
+
+
+## Fast API Project 1 - Request Method Logic
+
+### Overview
+
+What we are trying to create:
+
+![img.png](img.png)
+REST API uses HTTP Requests methods to accomplish CRUD operations.
+
+![img_1.png](img_1.png)
+
+### Enhance GET request
+
+We will be using our old **books.py** file. The first thing we will do is create a list of books.
+```python
+BOOKS = {
+    'book_1': {'title': 'Title One', 'author': 'Author One'},
+    'book_2': {'title': 'Title Two', 'author': 'Author Two'},
+    'book_3': {'title': 'Title Three', 'author': 'Author Three'},
+    'book_4': {'title': 'Title Four', 'author': 'Author Four'},
+    'book_5': {'title': 'Title Five', 'author': 'Author Five'},
+
+}
+```
+Then we will enhance our get API to return all the books.
+```python
+@app.get("/")  # adding a descriptor
+async def read_all_books():
+    return BOOKS
+```
+Then we can run the server by going to the same dir as the **books.py** and typing ```uvicorn books:app --reload```
+
+### Path Parameters
+Path parameter is a way in which we can add parameters to an API call. It typically happens when we are using a GET call or when we are using POST or anything where are needed to attach some kind of additional information to the URL that's not encrypted or secret from the client or the user.
+We can try this by adding the following snippet in **books.py** file:
+```python
+@app.get("/books/{book_title}")
+async def read_book(book_title):
+    return {'book_title': book_title}
+```
+We can also specify the data type to be passed in the function:
+```python
+@app.get("/books/{book_id}")
+async def read_book(book_id: int):
+    return {'book_title': book_id}
+```
+Now, if we try to pass a string in the URL path, then we will get an error.
+The order in which we write our functions matter. API calls that use path param, must be underneath any other kind of API that might be using a similar path.
+```python
+@app.get("/books/mybook")
+async def my_favorite_book():
+    return {'book_title': "My fav book"}
+
+
+@app.get("/books/{book_id}")
+async def read_book(book_id: int):
+    return {'book_title': book_id}
+```
+Here, *read_book()* needs to be underneath *my_favorite_book()*
+
+
+### Enumeration Path Parameters
+
+This will let the client access limited paths, as mentioned in the particular list or whatever we are enumerating.
+
+For example we want the client not to request any directions apart from North,South,East and West. We add the following in the **books.py**
+```python
+class DirectionName(str, Enum):
+    north = "North"
+    south = "South"
+    east = "East"
+    west = "West"
+
+@app.get("/directions/{direction_name}")
+async def get_direction(direction_name: DirectionName): # gets the param as direction_name as type as the class Direction Name
+    if direction_name == DirectionName.north:
+        return {'direction': direction_name, 'sub': 'Up'}
+    if direction_name == DirectionName.south:
+        return {'direction': direction_name, 'sub': 'Down'}
+    if direction_name == DirectionName.west:
+        return {'direction': direction_name, 'sub': 'Left'}
+    return {'direction': direction_name, 'sub': 'Right'}
+```
+The code so far before we go into specifics:
+```python
+# importing FAST API
+from fastapi import FastAPI
+from enum import Enum
+
+app = FastAPI()
+
+BOOKS = {
+    'book_1': {'title': 'Title One', 'author': 'Author One'},
+    'book_2': {'title': 'Title Two', 'author': 'Author Two'},
+    'book_3': {'title': 'Title Three', 'author': 'Author Three'},
+    'book_4': {'title': 'Title Four', 'author': 'Author Four'},
+    'book_5': {'title': 'Title Five', 'author': 'Author Five'},
+
+}
+
+
+class DirectionName(str, Enum):
+    north = "North"
+    south = "South"
+    east = "East"
+    west = "West"
+
+
+# create an asynchronous function
+@app.get("/")  # adding a descriptor
+async def read_all_books():
+    return BOOKS
+
+
+@app.get("/books/mybook")
+async def my_favorite_book():
+    return {'book_title': "My fav book"}
+
+
+@app.get("/books/{book_id}")
+async def read_book(book_id: int):
+    return {'book_title': book_id}
+
+
+@app.get("/directions/{direction_name}")
+async def get_direction(direction_name: DirectionName): # gets the param as direction_name as type as the class Direction Name
+    if direction_name == DirectionName.north:
+        return {'direction': direction_name, 'sub': 'Up'}
+    if direction_name == DirectionName.south:
+        return {'direction': direction_name, 'sub': 'Down'}
+    if direction_name == DirectionName.west:
+        return {'direction': direction_name, 'sub': 'Left'}
+    return {'direction': direction_name, 'sub': 'Right'}
+```
+### Enhance Parameters
+
+Here we will now try to retrieve books from the dictionary we had created based on the path param passed in.
+So we will edit our read_book() function and its path and decorator.
+```python
+from fastapi import FastAPI
+from enum import Enum
+
+app = FastAPI()
+
+BOOKS = {
+    'book_1': {'title': 'Title One', 'author': 'Author One'},
+    'book_2': {'title': 'Title Two', 'author': 'Author Two'},
+    'book_3': {'title': 'Title Three', 'author': 'Author Three'},
+    'book_4': {'title': 'Title Four', 'author': 'Author Four'},
+    'book_5': {'title': 'Title Five', 'author': 'Author Five'},
+
+}
+
+
+# create an asynchronous function
+@app.get("/")  # adding a descriptor
+async def read_all_books():
+    return BOOKS
+
+
+@app.get("/{book_name}")
+async def read_book(book_name: str):
+    return BOOKS[book_name]
+```
+Now if we run teh server, we can go to say: *http://127.0.0.1:8000/book_2* and this will give the following result:
+```json
+{
+"title": "Title Two",
+"author": "Author Two"
+}
+```
+
+
+### Query Parameters
+
+Query param are a set of key value pairs that go after question marks within an API URLs which helps add specific variables to API requests that can be used within the function of the APIs called.
+Let's try making an API which will return the list of all books but will skip a particular book (say book_3 by default)
+We will modify the *read_all_books()* function for the same
+```python
+@app.get("/")  # adding a descriptor
+async def read_all_books(skip_book: str = "book_3"):
+    new_books = BOOKS.copy()
+    del new_books[skip_book]
+    return new_books
+```
+Now when we run the server, we will see that by default the book_3 is missing from the list in homepage
+Also, we do custom instead of default like this: *http://127.0.0.1:8000/?skip_book=book_5*
+For query param we can also make it optional:
+```python
+from typing import Optional
+@app.get("/")  # adding a descriptor
+async def read_all_books(skip_book: Optional[str] = None):
+    if skip_book:
+        new_books = BOOKS.copy()
+        del new_books[skip_book]
+        return new_books
+    return BOOKS
+```
