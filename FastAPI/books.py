@@ -25,19 +25,38 @@ async def read_all_books(skip_book: Optional[str] = None):
     return BOOKS
 
 
-@app.get("/{book_name}")
-async def read_book(book_name: str):
+@app.post("/")
+async def create_book(book_title, book_author):
+    current_book_id = 0
+    if len(BOOKS) > 0:
+        for book in BOOKS:
+            x = int(book.split('_')[-1])
+            if x > current_book_id:
+                current_book_id = x
+    BOOKS[f'book_{current_book_id + 1}'] = {'title': book_title, 'author': book_author}
+    return BOOKS[f'book_{current_book_id + 1}']
+
+
+@app.put("/{book_name}")
+async def update_book(book_name: str, book_title: str, book_author: str):
+    book_information = {'title': book_title, 'author': book_author}
+    BOOKS[book_name] = book_information
+    return book_information
+
+
+@app.delete("/{book_name}")
+async def delete_book(book_name: str):
+    del BOOKS[book_name]
+    return f'Book {book_name} has been deleted'
+
+
+@app.get("/assignment/")
+async def read_book_assignment(book_name: str):
     return BOOKS[book_name]
+# http://127.0.0.1:8000/assignment/?book_name=book_3
 
 
-
-
-
-@app.get("/books/mybook")
-async def my_favorite_book():
-    return {'book_title': "My fav book"}
-
-
-
-
-
+@app.delete("/assignment/delete_book/")
+async def delete_book_assignment(book_name: str):
+    del BOOKS[book_name]
+    return f'The {book_name} has been deleted'

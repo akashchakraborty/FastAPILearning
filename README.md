@@ -282,3 +282,181 @@ async def read_all_books(skip_book: Optional[str] = None):
         return new_books
     return BOOKS
 ```
+Thus the code so far is:
+```python
+# importing FAST API
+from typing import Optional
+from fastapi import FastAPI
+from enum import Enum
+
+app = FastAPI()
+
+BOOKS = {
+    'book_1': {'title': 'Title One', 'author': 'Author One'},
+    'book_2': {'title': 'Title Two', 'author': 'Author Two'},
+    'book_3': {'title': 'Title Three', 'author': 'Author Three'},
+    'book_4': {'title': 'Title Four', 'author': 'Author Four'},
+    'book_5': {'title': 'Title Five', 'author': 'Author Five'},
+
+}
+
+
+# create an asynchronous function
+@app.get("/")  # adding a descriptor
+async def read_all_books(skip_book: Optional[str] = None):
+    if skip_book:
+        new_books = BOOKS.copy()
+        del new_books[skip_book]
+        return new_books
+    return BOOKS
+
+
+@app.get("/{book_name}")
+async def read_book(book_name: str):
+    return BOOKS[book_name]
+
+
+@app.get("/books/mybook")
+async def my_favorite_book():
+    return {'book_title': "My fav book"}
+
+```
+
+### POST Request
+Post is usually used to send a request body to the server for it to do some kind of data manipulation and then send a response body back.
+We will try to create a new book and new author by using the query param instead of using the request body. All this wil be done via Swagger UI.
+```python
+# importing FAST API
+from typing import Optional
+from fastapi import FastAPI
+from enum import Enum
+
+app = FastAPI()
+
+BOOKS = {
+    'book_1': {'title': 'Title One', 'author': 'Author One'},
+    'book_2': {'title': 'Title Two', 'author': 'Author Two'},
+    'book_3': {'title': 'Title Three', 'author': 'Author Three'},
+    'book_4': {'title': 'Title Four', 'author': 'Author Four'},
+    'book_5': {'title': 'Title Five', 'author': 'Author Five'},
+
+}
+
+
+# create an asynchronous function
+@app.get("/")  # adding a descriptor
+async def read_all_books(skip_book: Optional[str] = None):
+    if skip_book:
+        new_books = BOOKS.copy()
+        del new_books[skip_book]
+        return new_books
+    return BOOKS
+
+
+@app.post("/")
+async def create_book(book_title,book_author):
+    current_book_id = 0
+    if len(BOOKS) > 0:
+        for book in BOOKS:
+            x = int(book.split('_')[-1])
+            if x > current_book_id:
+                current_book_id = x
+    BOOKS[f'book_{current_book_id+1}'] = {'title': book_title, 'author': book_author}
+    return BOOKS[f'book_{current_book_id+1}']
+```
+
+### PUT Request
+
+Here, we will be creating a method to update the BOOKS. 
+We will scroll down the POST API we made and create a PUT API, in **books.py**
+```python
+@app.put("/{book_name}")
+async def update_book(book_name: str, book_title: str, book_author: str):
+    book_information = {'title': book_title, 'author': book_author}
+    BOOKS[book_name] = book_information
+    return book_information
+```
+We can now run the server and see it in Swagger UI.
+NOTE: We are sending all requests in query param or path params as of now , not as a request body.
+
+### DELETE Request
+Here we will make an async function to delete a book from the dictionary.
+```python
+@app.delete("/{book_name}")
+async def delete_book(book_name: str):
+    del BOOKS[book_name]
+    return f'Book {book_name} has been deleted'
+```
+After this we open Swagger UI to test it after running the server.
+
+Thus, the code so far (**books.py**)is:
+```python
+# importing FAST API
+from typing import Optional
+from fastapi import FastAPI
+from enum import Enum
+
+app = FastAPI()
+
+BOOKS = {
+    'book_1': {'title': 'Title One', 'author': 'Author One'},
+    'book_2': {'title': 'Title Two', 'author': 'Author Two'},
+    'book_3': {'title': 'Title Three', 'author': 'Author Three'},
+    'book_4': {'title': 'Title Four', 'author': 'Author Four'},
+    'book_5': {'title': 'Title Five', 'author': 'Author Five'},
+}
+
+# create an asynchronous function
+@app.get("/")  # adding a descriptor
+async def read_all_books(skip_book: Optional[str] = None):
+    if skip_book:
+        new_books = BOOKS.copy()
+        del new_books[skip_book]
+        return new_books
+    return BOOKS
+
+@app.post("/")
+async def create_book(book_title,book_author):
+    current_book_id = 0
+    if len(BOOKS) > 0:
+        for book in BOOKS:
+            x = int(book.split('_')[-1])
+            if x > current_book_id:
+                current_book_id = x
+    BOOKS[f'book_{current_book_id+1}'] = {'title': book_title, 'author': book_author}
+    return BOOKS[f'book_{current_book_id+1}']
+
+@app.put("/{book_name}")
+async def update_book(book_name: str, book_title: str, book_author: str):
+    book_information = {'title': book_title, 'author': book_author}
+    BOOKS[book_name] = book_information
+    return book_information
+
+@app.delete("/{book_name}")
+async def delete_book(book_name: str):
+    del BOOKS[book_name]
+    return f'Book {book_name} has been deleted'
+
+```
+
+### Assignment
+1. Create a new read book function that uses query params instead of path params
+2. Create a new delete book function that uses query params instead of path params
+
+```python
+@app.get("/assignment/") # the '/' after assignment tells tha API that a query param will come after it
+async def read_book_assignment(book_name: str):
+    return BOOKS[book_name]
+```
+We can test it like this: *http://127.0.0.1:8000/assignment/?book_name=book_3*
+
+```python
+@app.delete("/assignment/delete_book/")
+async def delete_book_assignment(book_name: str):
+    del BOOKS[book_name]
+    return f'The {book_name} has been deleted'
+```
+
+## Fast API Project 2 - Move Fast with Fast API
+
+### Overview
